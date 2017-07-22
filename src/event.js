@@ -13,18 +13,13 @@
   , 'touchleave'
   , 'touchend'
   , 'touchcancel' ].forEach(function(event) {
-  
-  // add event to SVG.Element 
+
+  // add event to SVG.Element
   SVG.Element.prototype[event] = function(f) {
-    var self = this
-    
-    // bind event to element rather than element node 
-    this.node['on' + event] = typeof f == 'function' ?
-      function() { return f.apply(self, arguments) } : null
-    
+    // bind event to element rather than element node
+    SVG.on(this.node, event, f)
     return this
   }
-  
 })
 
 // Initialize listeners stack
@@ -33,14 +28,14 @@ SVG.handlerMap = []
 SVG.listenerId = 0
 
 // Add event binder in the SVG namespace
-SVG.on = function(node, event, listener, binding) {
+SVG.on = function(node, event, listener, binding, options) {
   // create listener, get object-index
   var l     = listener.bind(binding || node.instance || node)
     , index = (SVG.handlerMap.indexOf(node) + 1 || SVG.handlerMap.push(node)) - 1
     , ev    = event.split('.')[0]
     , ns    = event.split('.')[1] || '*'
-    
-  
+
+
   // ensure valid object
   SVG.listeners[index]         = SVG.listeners[index]         || {}
   SVG.listeners[index][ev]     = SVG.listeners[index][ev]     || {}
@@ -48,12 +43,12 @@ SVG.on = function(node, event, listener, binding) {
 
   if(!listener._svgjsListenerId)
     listener._svgjsListenerId = ++SVG.listenerId
-  
+
   // reference listener
   SVG.listeners[index][ev][ns][listener._svgjsListenerId] = l
 
   // add listener
-  node.addEventListener(ev, l, false)
+  node.addEventListener(ev, l, options || false)
 }
 
 // Add event unbinder in the SVG namespace
@@ -61,6 +56,7 @@ SVG.off = function(node, event, listener) {
   var index = SVG.handlerMap.indexOf(node)
     , ev    = event && event.split('.')[0]
     , ns    = event && event.split('.')[1]
+    , namespace = ''
 
   if(index == -1) return
 
@@ -110,6 +106,7 @@ SVG.off = function(node, event, listener) {
       SVG.off(node, event)
 
     delete SVG.listeners[index]
+    delete SVG.handlerMap[index]
 
   }
 }
@@ -117,27 +114,31 @@ SVG.off = function(node, event, listener) {
 //
 SVG.extend(SVG.Element, {
   // Bind given event to listener
-  on: function(event, listener, binding) {
-    SVG.on(this.node, event, listener, binding)
-    
+  on: function(event, listener, binding, options) {
+    SVG.on(this.node, event, listener, binding, options)
+
     return this
   }
   // Unbind event from listener
 , off: function(event, listener) {
     SVG.off(this.node, event, listener)
-    
+
     return this
   }
   // Fire given event
 , fire: function(event, data) {
-    
+
     // Dispatch event
-    if(event instanceof Event){
+    if(event instanceof window.Event){
         this.node.dispatchEvent(event)
     }else{
-        this.node.dispatchEvent(new CustomEvent(event, {detail:data}))
+        this.node.dispatchEvent(event = new window.CustomEvent(event, {detail:data, cancelable: true}))
     }
 
+    this._event = event
     return this
+  }
+, event: function() {
+    return this._event
   }
 })

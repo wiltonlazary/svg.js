@@ -4,6 +4,7 @@ SVG.Element = SVG.invent({
   create: function(node) {
     // make stroke value accessible dynamically
     this._stroke = SVG.defaults.attrs.stroke
+    this._event = null
 
     // initialize data object
     this.dom = {}
@@ -54,14 +55,17 @@ SVG.Element = SVG.invent({
     }
     // Set element size to given width and height
   , size: function(width, height) {
-      var p = proportionalSize(this.bbox(), width, height)
+      var p = proportionalSize(this, width, height)
 
       return this
         .width(new SVG.Number(p.width))
         .height(new SVG.Number(p.height))
     }
     // Clone element
-  , clone: function(parent) {
+  , clone: function(parent, withData) {
+      // write dom data to the dom so the clone can pickup the data
+      this.writeDataToDom()
+
       // clone element and assign new id
       var clone = assignNewId(this.node.cloneNode(true))
 
@@ -125,7 +129,7 @@ SVG.Element = SVG.invent({
   , classes: function() {
       var attr = this.attr('class')
 
-      return attr == null ? [] : attr.trim().split(/\s+/)
+      return attr == null ? [] : attr.trim().split(SVG.regex.delimiter)
     }
     // Return true if class exists on the node, false otherwise
   , hasClass: function(name) {
@@ -172,8 +176,9 @@ SVG.Element = SVG.invent({
       if(!type) return parent
 
       // loop trough ancestors if type is given
-      while(parent && parent.node instanceof SVGElement){
+      while(parent && parent.node instanceof window.SVGElement){
         if(typeof type === 'string' ? parent.matches(type) : parent instanceof type) return parent
+        if(parent.node.parentNode.nodeName == '#document') return null // #720
         parent = SVG.adopt(parent.node.parentNode)
       }
     }

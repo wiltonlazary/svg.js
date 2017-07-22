@@ -2,14 +2,14 @@ SVG.Point = SVG.invent({
   // Initialize
   create: function(x,y) {
     var i, source, base = {x:0, y:0}
-    
+
     // ensure source as object
     source = Array.isArray(x) ?
       {x:x[0], y:x[1]} :
     typeof x === 'object' ?
       {x:x.x, y:x.y} :
-    y != null ?
-      {x:x, y:y} : base
+    x != null ?
+      {x:x, y:(y != null ? y : x)} : base // If y has no value, then x is used has its value
 
     // merge source
     this.x = source.x
@@ -23,9 +23,9 @@ SVG.Point = SVG.invent({
       return new SVG.Point(this)
     }
     // Morph one point into another
-  , morph: function(point) {
+  , morph: function(x, y) {
       // store new destination
-      this.destination = new SVG.Point(point)
+      this.destination = new SVG.Point(x, y)
 
       return this
     }

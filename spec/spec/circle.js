@@ -154,13 +154,13 @@ describe('Circle', function() {
   
   describe('scale()', function() {
     it('should scale the element universally with one argument', function() {
-      var box = circle.scale(2).tbox()
+      var box = circle.scale(2).rbox()
       
       expect(box.width).toBe(circle.attr('r') * 2 * 2)
       expect(box.height).toBe(circle.attr('r') * 2 * 2)
     })
     it('should scale the element over individual x and y axes with two arguments', function() {
-      var box = circle.scale(2, 3.5).tbox()
+      var box = circle.scale(2, 3.5).rbox()
       
       expect(box.width).toBe(circle.attr('r') * 2 * 2)
       expect(box.height).toBe(circle.attr('r') * 2 * 3.5)
@@ -170,16 +170,8 @@ describe('Circle', function() {
   describe('translate()', function() {
     it('sets the translation of an element', function() {
       circle.transform({ x: 12, y: 12 })
-      expect(circle.node.getAttribute('transform')).toBe('matrix(1,0,0,1,12,12)')
+      expect(window.matrixStringToArray(circle.node.getAttribute('transform'))).toEqual([1,0,0,1,12,12])
     })
   })
   
 })
-
-
-
-
-
-
-
-

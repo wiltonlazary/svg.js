@@ -57,19 +57,23 @@ SVG.Number = SVG.invent({
     }
     // Add number
   , plus: function(number) {
-      return new SVG.Number(this + new SVG.Number(number), this.unit)
+      number = new SVG.Number(number)
+      return new SVG.Number(this + number, this.unit || number.unit)
     }
     // Subtract number
   , minus: function(number) {
-      return this.plus(-new SVG.Number(number))
+      number = new SVG.Number(number)
+      return new SVG.Number(this - number, this.unit || number.unit)
     }
     // Multiply number
   , times: function(number) {
-      return new SVG.Number(this * new SVG.Number(number), this.unit)
+      number = new SVG.Number(number)
+      return new SVG.Number(this * number, this.unit || number.unit)
     }
     // Divide number
   , divide: function(number) {
-      return new SVG.Number(this / new SVG.Number(number), this.unit)
+      number = new SVG.Number(number)
+      return new SVG.Number(this / number, this.unit || number.unit)
     }
     // Convert to different unit
   , to: function(unit) {
@@ -83,6 +87,10 @@ SVG.Number = SVG.invent({
     // Make number morphable
   , morph: function(number) {
       this.destination = new SVG.Number(number)
+
+      if(number.relative) {
+        this.destination.value += this.value
+      }
 
       return this
     }

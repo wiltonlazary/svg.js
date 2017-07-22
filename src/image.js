@@ -12,10 +12,10 @@ SVG.Image = SVG.invent({
       if (!url) return this
 
       var self = this
-        , img  = document.createElement('img')
+        , img  = new window.Image()
       
       // preload image
-      img.onload = function() {
+      SVG.on(img, 'load', function() {
         var p = self.parent(SVG.Pattern)
 
         if(p === null) return
@@ -36,13 +36,24 @@ SVG.Image = SVG.invent({
           , ratio:  img.width / img.height
           , url:    url
           })
-      }
+      })
+
+      SVG.on(img, 'error', function(e){
+        if (typeof self._error === 'function'){
+            self._error.call(self, e)
+        }
+      })
 
       return this.attr('href', (img.src = this.src = url), SVG.xlink)
     }
     // Add loaded callback
   , loaded: function(loaded) {
       this._loaded = loaded
+      return this
+    }
+
+  , error: function(error) {
+      this._error = error
       return this
     }
   }

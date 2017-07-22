@@ -3,7 +3,6 @@ var del     = require('del')
   , chmod   = require('gulp-chmod')
   , concat  = require('gulp-concat')
   , header  = require('gulp-header')
-  , jasmine = require('gulp-jasmine')
   , rename  = require('gulp-rename')
   , size    = require('gulp-size')
   , trim    = require('gulp-trimlines')
@@ -62,6 +61,7 @@ var parts = [
 , 'src/doc.js'
 , 'src/shape.js'
 , 'src/bare.js'
+, 'src/symbol.js'
 , 'src/use.js'
 , 'src/rect.js'
 , 'src/ellipse.js'
@@ -84,8 +84,8 @@ var parts = [
 , 'src/polyfill.js'
 ]
 
-gulp.task('clean', function(cb) {
-  del([ 'dist/*' ], cb);
+gulp.task('clean', function() {
+  return del([ 'dist/*' ])
 })
 
 /**
@@ -101,7 +101,7 @@ gulp.task('unify', ['clean'], function() {
     .pipe(wrapUmd({ src: 'src/umd.js'}))
     .pipe(header(headerLong, { pkg: pkg }))
     .pipe(trim({ leading: false }))
-    .pipe(chmod(644))
+    .pipe(chmod(0o644))
     .pipe(gulp.dest('dist'))
     .pipe(size({ showFiles: true, title: 'Full' }))
 })
@@ -117,34 +117,10 @@ gulp.task('minify', ['unify'], function() {
     .pipe(rename({ suffix:'.min' }))
     .pipe(size({ showFiles: true, title: 'Minified' }))
     .pipe(header(headerShort, { pkg: pkg }))
-    .pipe(chmod(644))
+    .pipe(chmod(0o644))
     .pipe(gulp.dest('dist'))
     .pipe(size({ showFiles: true, gzip: true, title: 'Gzipped' }))
 })
 
-/**
- ‎* rebuild documentation using documentup
- */
 
-gulp.task('docs', function() {
-  fs.readFile('README.md', 'utf8', function (err, data) {
-    request.post(
-      'http://documentup.com/compiled'
-    , { form: { content: data, name: 'SVG.js', theme: 'v1' } }
-    , function (error, response, body) {
-        // Replace stylesheet
-        body = body.replace('//documentup.com/stylesheets/themes/v1.css', 'svgjs.css')
-
-        // Write file
-        fs.writeFile('docs/index.html', body, function(err) {})
-      }
-    )
-  })
-})
-
-gulp.task('default', ['clean', 'unify', 'minify'], function() {})
-
-
-
-
-
+gulp.task('default', ['clean', 'unify', 'minify'])

@@ -2,23 +2,16 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Jasmine Spec Runner v2.4.1</title>
+  <title>SVG.js - Jasmine Spec Runner v2.6.0</title>
 
-  <link rel="shortcut icon" type="image/png" href="lib/jasmine-2.4.1/jasmine_favicon.png">
-  <link rel="stylesheet" href="lib/jasmine-2.4.1/jasmine.css">
+  <link rel="shortcut icon" type="image/png" href="lib/jasmine-2.6.0/jasmine_favicon.png">
+  <link rel="stylesheet" href="lib/jasmine-2.6.0/jasmine.css">
 
-  <script src="lib/jasmine-2.4.1/jasmine.js"></script>
-  <script src="lib/jasmine-2.4.1/jasmine-html.js"></script>
-  <script src="lib/jasmine-2.4.1/boot.js"></script>
+  <script src="lib/jasmine-2.6.0/jasmine.js"></script>
+  <script src="lib/jasmine-2.6.0/jasmine-html.js"></script>
+  <script src="lib/jasmine-2.6.0/boot.js"></script>
 
-  <style type="text/css" media="screen">
-    #drawing {
-      width: 500px;
-      height: 500px;
-      position: fixed;
-      z-index: -1;
-    }
-  </style>
+  <link rel="stylesheet" href="fixtures/fixture.css">
 
   <!-- include source files here... -->
   <script src="../dist/svg.js" charset="utf-8"></script>
@@ -26,7 +19,18 @@
 </head>
 
 <body>
+
   <svg height="0" width="0" id="inlineSVG">
+    <defs>
+      <linearGradient>
+        <stop offset="5%"  stop-color="green"/>
+        <stop offset="95%" stop-color="gold"/>
+      </linearGradient>
+      <radialGradient>
+        <stop offset="10%" stop-color="gold"/>
+        <stop offset="95%" stop-color="green"/>
+      </radialGradient>
+    </defs>
     <desc>Some description</desc>
     <path id="lineAB" d="M 100 350 l 150 -300" stroke="red" stroke-width="3" fill="none" />
     <path id="lineBC" d="M 250 50 l 150 300" stroke="red" stroke-width="3" fill="none" />
@@ -46,46 +50,55 @@
     <polyline points="20,20 40,25 60,40 80,120 120,140 200,180" />
   </svg>
 
+
   <!-- include spec files here... -->
-  <script src="spec/svg.js"></script>
-  <script src="spec/selector.js"></script>
   <script src="spec/adopter.js"></script>
-  <script src="spec/regex.js"></script>
-  <script src="spec/container.js"></script>
-  <script src="spec/element.js"></script>
-  <script src="spec/memory.js"></script>
   <script src="spec/arrange.js"></script>
-  <script src="spec/event.js"></script>
-  <script src="spec/boxes.js"></script>
-  <script src="spec/matrix.js"></script>
-  <script src="spec/rect.js"></script>
-  <script src="spec/circle.js"></script>
-  <script src="spec/ellipse.js"></script>
-  <script src="spec/line.js"></script>
-  <script src="spec/polyline.js"></script>
-  <script src="spec/polygon.js"></script>
-  <script src="spec/path.js"></script>
-  <script src="spec/marker.js"></script>
-  <script src="spec/image.js"></script>
-  <script src="spec/text.js"></script>
-  <script src="spec/textpath.js"></script>
-  <script src="spec/doc.js"></script>
-  <script src="spec/defs.js"></script>
-  <script src="spec/group.js"></script>
-  <script src="spec/set.js"></script>
-  <script src="spec/gradient.js"></script>
-  <script src="spec/pattern.js"></script>
-  <script src="spec/use.js"></script>
+  <script src="spec/array.js"></script>
   <script src="spec/bare.js"></script>
-  <script src="spec/mask.js"></script>
+  <script src="spec/boxes.js"></script>
+  <script src="spec/circle.js"></script>
   <script src="spec/clip.js"></script>
   <script src="spec/color.js"></script>
-  <script src="spec/number.js"></script>
-  <script src="spec/array.js"></script>
-  <script src="spec/hyperlink.js"></script>
-  <script src="spec/viewbox.js"></script>
+  <script src="spec/container.js"></script>
+  <script src="spec/defs.js"></script>
+  <script src="spec/doc.js"></script>
+  <script src="spec/easing.js"></script>
+  <script src="spec/element.js"></script>
+  <script src="spec/ellipse.js"></script>
+  <script src="spec/event.js"></script>
   <script src="spec/fx.js"></script>
+  <script src="spec/gradient.js"></script>
+  <script src="spec/group.js"></script>
+  <script src="spec/helper.js"></script>
+  <script src="spec/hyperlink.js"></script>
+  <script src="spec/image.js"></script>
+  <script src="spec/line.js"></script>
+  <script src="spec/marker.js"></script>
+  <script src="spec/mask.js"></script>
+  <script src="spec/matrix.js"></script>
+  <script src="spec/memory.js"></script>
+  <script src="spec/nested.js"></script>
+  <script src="spec/number.js"></script>
+  <script src="spec/path.js"></script>
+  <script src="spec/pattern.js"></script>
+  <script src="spec/point.js"></script>
+  <script src="spec/polygon.js"></script>
+  <script src="spec/polyline.js"></script>
+  <script src="spec/rect.js"></script>
+  <script src="spec/regex.js"></script>
+  <script src="spec/selector.js"></script>
+  <script src="spec/set.js"></script>
+  <script src="spec/sugar.js"></script>
+  <script src="spec/svg.js"></script>
+  <script src="spec/symbol.js"></script>
+  <script src="spec/text.js"></script>
+  <script src="spec/textpath.js"></script>
+  <script src="spec/transformations.js"></script>
+  <script src="spec/tspan.js"></script>
+  <script src="spec/use.js"></script>
+  <script src="spec/utils.js"></script>
+  <script src="spec/viewbox.js"></script>
 
-  <script type="text/javascript" src="spec/helper.js"></script>
 </body>
 </html>

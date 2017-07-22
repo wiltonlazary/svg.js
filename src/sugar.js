@@ -7,16 +7,18 @@ var sugar = {
   }
 }
 
-// Add sugar for fill and stroke 
+// Add sugar for fill and stroke
 ;['fill', 'stroke'].forEach(function(m) {
   var i, extension = {}
 
   extension[m] = function(o) {
+    if (typeof o == 'undefined')
+      return this
     if (typeof o == 'string' || SVG.Color.isRgb(o) || (o && typeof o.fill === 'function'))
       this.attr(m, o)
 
     else
-      // set all attributes from sugar.fill and sugar.stroke list 
+      // set all attributes from sugar.fill and sugar.stroke list
       for (i = sugar[m].length - 1; i >= 0; i--)
         if (o[sugar[m][i]] != null)
           this.attr(sugar.prefix(m, sugar[m][i]), o[sugar[m][i]])
@@ -35,7 +37,9 @@ SVG.extend(SVG.Element, SVG.FX, {
   }
   // Map skew to transform
 , skew: function(x, y, cx, cy) {
-    return this.transform({ skewX: x, skewY: y, cx: cx, cy: cy })
+    return arguments.length == 1  || arguments.length == 3 ?
+      this.transform({ skew: x, cx: y, cy: cx }) : 
+      this.transform({ skewX: x, skewY: y, cx: cx, cy: cy })
   }
   // Map scale to transform
 , scale: function(x, y, cx, cy) {
@@ -49,11 +53,12 @@ SVG.extend(SVG.Element, SVG.FX, {
   }
   // Map flip to transform
 , flip: function(a, o) {
-    return this.transform({ flip: a, offset: o })
+    o = typeof a == 'number' ? a : o
+    return this.transform({ flip: a || 'both', offset: o })
   }
   // Map matrix to transform
 , matrix: function(m) {
-    return this.attr('transform', new SVG.Matrix(m))
+    return this.attr('transform', new SVG.Matrix(arguments.length == 6 ? [].slice.call(arguments) : m))
   }
   // Opacity
 , opacity: function(value) {
@@ -61,11 +66,11 @@ SVG.extend(SVG.Element, SVG.FX, {
   }
   // Relative move over x axis
 , dx: function(x) {
-    return this.x((this instanceof SVG.FX ? 0 : this.x()) + x, true)
+    return this.x(new SVG.Number(x).plus(this instanceof SVG.FX ? 0 : this.x()), true)
   }
   // Relative move over y axis
 , dy: function(y) {
-    return this.y((this instanceof SVG.FX ? 0 : this.y()) + y, true)
+    return this.y(new SVG.Number(y).plus(this instanceof SVG.FX ? 0 : this.y()), true)
   }
   // Relative move over x and y axes
 , dmove: function(x, y) {
@@ -94,19 +99,19 @@ SVG.extend(SVG.Path, {
   }
 })
 
-SVG.extend(SVG.Parent, SVG.Text, SVG.FX, {
+SVG.extend(SVG.Parent, SVG.Text, SVG.Tspan, SVG.FX, {
   // Set font
-  font: function(o) {
-    for (var k in o)
-      k == 'leading' ?
-        this.leading(o[k]) :
-      k == 'anchor' ?
-        this.attr('text-anchor', o[k]) :
-      k == 'size' || k == 'family' || k == 'weight' || k == 'stretch' || k == 'variant' || k == 'style' ?
-        this.attr('font-'+ k, o[k]) :
-        this.attr(k, o[k])
+  font: function(a, v) {
+    if (typeof a == 'object') {
+      for (v in a) this.font(v, a[v])
+    }
 
-    return this
+    return a == 'leading' ?
+        this.leading(v) :
+      a == 'anchor' ?
+        this.attr('text-anchor', v) :
+      a == 'size' || a == 'family' || a == 'weight' || a == 'stretch' || a == 'variant' || a == 'style' ?
+        this.attr('font-'+ a, v) :
+        this.attr(a, v)
   }
 })
-

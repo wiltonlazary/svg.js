@@ -3,7 +3,7 @@ SVG.extend(SVG.Element, {
   transform: function(o, relative) {
     // get target in case of the fx module, otherwise reference this
     var target = this
-      , matrix
+      , matrix, bbox
 
     // act as a getter
     if (typeof o !== 'object') {
@@ -58,13 +58,13 @@ SVG.extend(SVG.Element, {
       matrix = matrix.scale(o.scaleX, o.scaleY, o.cx, o.cy)
 
     // act on skew
-    } else if (o.skewX != null || o.skewY != null) {
+    } else if (o.skew != null || o.skewX != null || o.skewY != null) {
       // ensure centre point
       ensureCentre(o, target)
 
       // ensure skew values on both axes
-      o.skewX = o.skewX != null ? o.skewX : 0
-      o.skewY = o.skewY != null ? o.skewY : 0
+      o.skewX = o.skew != null ? o.skew : o.skewX != null ? o.skewX : 0
+      o.skewY = o.skew != null ? o.skew : o.skewY != null ? o.skewY : 0
 
       if (!relative) {
         // absolute; reset skew values
@@ -76,10 +76,19 @@ SVG.extend(SVG.Element, {
 
     // act on flip
     } else if (o.flip) {
-      matrix = matrix.flip(
-        o.flip
-      , o.offset == null ? target.bbox()['c' + o.flip] : o.offset
-      )
+      if(o.flip == 'x' || o.flip == 'y') {
+        o.offset = o.offset == null ? target.bbox()['c' + o.flip] : o.offset
+      } else {
+        if(o.offset == null) {
+          bbox = target.bbox()
+          o.flip = bbox.cx
+          o.offset = bbox.cy
+        } else {
+          o.flip = o.offset
+        }
+      }
+
+      matrix = new SVG.Matrix().flip(o.flip, o.offset)
 
     // act on translate
     } else if (o.x != null || o.y != null) {
@@ -101,7 +110,7 @@ SVG.extend(SVG.FX, {
   transform: function(o, relative) {
     // get target in case of the fx module, otherwise reference this
     var target = this.target()
-      , matrix
+      , matrix, bbox
 
     // act as a getter
     if (typeof o !== 'object') {
@@ -150,10 +159,19 @@ SVG.extend(SVG.FX, {
 
     // act on flip
     } else if (o.flip) {
-      matrix = new SVG.Matrix().morph(new SVG.Matrix().flip(
-        o.flip
-      , o.offset == null ? target.bbox()['c' + o.flip] : o.offset
-      ))
+      if(o.flip == 'x' || o.flip == 'y') {
+        o.offset = o.offset == null ? target.bbox()['c' + o.flip] : o.offset
+      } else {
+        if(o.offset == null) {
+          bbox = target.bbox()
+          o.flip = bbox.cx
+          o.offset = bbox.cy
+        } else {
+          o.flip = o.offset
+        }
+      }
+
+      matrix = new SVG.Matrix().flip(o.flip, o.offset)
 
     // act on translate
     } else if (o.x != null || o.y != null) {
@@ -166,9 +184,7 @@ SVG.extend(SVG.FX, {
 
     this.last().transforms.push(matrix)
 
-    setTimeout(function(){this.start()}.bind(this), 0)
-
-    return this
+    return this._callStart()
   }
 })
 
@@ -182,12 +198,12 @@ SVG.extend(SVG.Element, {
 
     var matrix = (this.attr('transform') || '')
       // split transformations
-      .split(/\)\s*/).slice(0,-1).map(function(str){
+      .split(SVG.regex.transforms).slice(0,-1).map(function(str){
         // generate key => value pairs
         var kv = str.trim().split('(')
-        return [kv[0], kv[1].split(SVG.regex.matrixElements).map(function(str){ return parseFloat(str) })]
+        return [kv[0], kv[1].split(SVG.regex.delimiter).map(function(str){ return parseFloat(str) })]
       })
-      // calculate every transformation into one matrix
+      // merge every transformation into one matrix
       .reduce(function(matrix, transform){
 
         if(transform[0] == 'matrix') return matrix.multiply(arrayToMatrix(transform[1]))
@@ -201,9 +217,7 @@ SVG.extend(SVG.Element, {
   toParent: function(parent) {
     if(this == parent) return this
     var ctm = this.screenCTM()
-    var temp = parent.rect(1,1)
-    var pCtm = temp.screenCTM().inverse()
-    temp.remove()
+    var pCtm = parent.screenCTM().inverse()
 
     this.addTo(parent).untransform().transform(pCtm.multiply(ctm))
 
@@ -221,18 +235,16 @@ SVG.Transformation = SVG.invent({
   create: function(source, inversed){
 
     if(arguments.length > 1 && typeof inversed != 'boolean'){
-      return this.create([].slice.call(arguments))
-    }
-
-    if(typeof source == 'object'){
-      for(var i = 0, len = this.arguments.length; i < len; ++i){
-        this[this.arguments[i]] = source[this.arguments[i]]
-      }
+      return this.constructor.call(this, [].slice.call(arguments))
     }
 
     if(Array.isArray(source)){
       for(var i = 0, len = this.arguments.length; i < len; ++i){
         this[this.arguments[i]] = source[i]
+      }
+    } else if(typeof source == 'object'){
+      for(var i = 0, len = this.arguments.length; i < len; ++i){
+        this[this.arguments[i]] = source[this.arguments[i]]
       }
     }
 
@@ -246,7 +258,10 @@ SVG.Transformation = SVG.invent({
 
 , extend: {
 
-    at: function(pos){
+    arguments: []
+  , method: ''
+
+  , at: function(pos){
 
       var params = []
 
@@ -263,7 +278,18 @@ SVG.Transformation = SVG.invent({
     }
 
   , undo: function(o){
+      for(var i = 0, len = this.arguments.length; i < len; ++i){
+        o[this.arguments[i]] = typeof this[this.arguments[i]] == 'undefined' ? 0 : o[this.arguments[i]]
+      }
+
+      // The method SVG.Matrix.extract which was used before calling this
+      // method to obtain a value for the parameter o doesn't return a cx and
+      // a cy so we use the ones that were provided to this object at its creation
+      o.cx = this.cx
+      o.cy = this.cy
+
       this._undo = new SVG[capitalize(this.method)](o, true).at(1)
+
       return this
     }
 
@@ -277,8 +303,7 @@ SVG.Translate = SVG.invent({
 , inherit: SVG.Transformation
 
 , create: function(source, inversed){
-    if(typeof source == 'object') this.constructor.call(this, source, inversed)
-    else this.constructor.call(this, [].slice.call(arguments))
+    this.constructor.apply(this, [].slice.call(arguments))
   }
 
 , extend: {
@@ -294,8 +319,7 @@ SVG.Rotate = SVG.invent({
 , inherit: SVG.Transformation
 
 , create: function(source, inversed){
-    if(typeof source == 'object') this.constructor.call(this, source, inversed)
-    else this.constructor.call(this, [].slice.call(arguments))
+    this.constructor.apply(this, [].slice.call(arguments))
   }
 
 , extend: {
@@ -307,6 +331,7 @@ SVG.Rotate = SVG.invent({
     }
   , undo: function(o){
       this._undo = o
+      return this
     }
   }
 
@@ -318,8 +343,7 @@ SVG.Scale = SVG.invent({
 , inherit: SVG.Transformation
 
 , create: function(source, inversed){
-    if(typeof source == 'object') this.constructor.call(this, source, inversed)
-    else this.constructor.call(this, [].slice.call(arguments))
+    this.constructor.apply(this, [].slice.call(arguments))
   }
 
 , extend: {
@@ -335,8 +359,7 @@ SVG.Skew = SVG.invent({
 , inherit: SVG.Transformation
 
 , create: function(source, inversed){
-    if(typeof source == 'object') this.constructor.call(this, source, inversed)
-    else this.constructor.call(this, [].slice.call(arguments))
+    this.constructor.apply(this, [].slice.call(arguments))
   }
 
 , extend: {

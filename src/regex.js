@@ -12,11 +12,8 @@ SVG.regex = {
   // Parse reference id
 , reference:        /#([a-z0-9\-_]+)/i
 
-  // Parse matrix wrapper
-, matrix:           /matrix\(|\)/g
-
-  // Elements of a matrix
-, matrixElements:   /,*\s+|,/
+  // splits a transformation chain
+, transforms:       /\)\s*,?\s*/
 
   // Whitespace
 , whitespace:       /\s/g
@@ -42,16 +39,13 @@ SVG.regex = {
   // Test for image url
 , isImage:          /\.(jpg|jpeg|png|gif|svg)(\?[^=]+.*)?/i
 
+  // split at whitespace and comma
+, delimiter:        /[\s,]+/
+
   // The following regex are used to parse the d attribute of a path
 
-  // Replaces all negative exponents
-, negExp:           /e\-/gi
-
-  // Replaces all comma
-, comma:            /,/g
-
-  // Replaces all hyphens
-, hyphen:           /\-/g
+  // Matches all hyphens which are not after an exponent
+, hyphen:           /([^e])\-/gi
 
   // Replaces and tests for all path letters
 , pathLetters:      /[MLHVCSQTAZ]/gi
@@ -59,9 +53,9 @@ SVG.regex = {
   // yes we need this one, too
 , isPathLetter:     /[MLHVCSQTAZ]/i
 
-  // split at whitespaces
-, whitespaces:      /\s+/
+  // matches 0.154.23.45
+, numbersWithDots:  /((\d?\.\d+(?:e[+-]?\d+)?)((?:\.\d+(?:e[+-]?\d+)?)+))+/gi
 
-  // matches X
-, X:                /X/g
+  // matches .
+, dots:             /\./g
 }

@@ -7,15 +7,17 @@ SVG.Matrix = SVG.invent({
     source = source instanceof SVG.Element ?
       source.matrixify() :
     typeof source === 'string' ?
-      stringToMatrix(source) :
+      arrayToMatrix(source.split(SVG.regex.delimiter).map(parseFloat)) :
     arguments.length == 6 ?
       arrayToMatrix([].slice.call(arguments)) :
+    Array.isArray(source) ?
+      arrayToMatrix(source) :
     typeof source === 'object' ?
       source : base
 
     // merge source
     for (i = abcdef.length - 1; i >= 0; --i)
-      this[abcdef[i]] = source && typeof source[abcdef[i]] === 'number' ?
+      this[abcdef[i]] = source[abcdef[i]] != null ?
         source[abcdef[i]] : base[abcdef[i]]
   }
 
@@ -77,26 +79,6 @@ SVG.Matrix = SVG.invent({
       , f: this.f + (this.destination.f - this.f) * pos
       })
 
-      // process parametric rotation if present
-      if (this.param && this.param.to) {
-        // calculate current parametric position
-        var param = {
-          rotation: this.param.from.rotation + (this.param.to.rotation - this.param.from.rotation) * pos
-        , cx:       this.param.from.cx
-        , cy:       this.param.from.cy
-        }
-
-        // rotate matrix
-        matrix = matrix.rotate(
-          (this.param.to.rotation - this.param.from.rotation * 2) * pos
-        , param.cx
-        , param.cy
-        )
-
-        // store current parametric values
-        matrix.param = param
-      }
-
       return matrix
     }
     // Multiplies by given matrix
@@ -113,12 +95,13 @@ SVG.Matrix = SVG.invent({
     }
     // Scale matrix
   , scale: function(x, y, cx, cy) {
-      // support universal scale
-      if (arguments.length == 1 || arguments.length == 3)
+      // support uniformal scale
+      if (arguments.length == 1) {
         y = x
-      if (arguments.length == 3) {
+      } else if (arguments.length == 3) {
         cy = cx
         cx = y
+        y = x
       }
 
       return this.around(cx, cy, new SVG.Matrix(x, 0, 0, y, 0, 0))
@@ -132,19 +115,36 @@ SVG.Matrix = SVG.invent({
     }
     // Flip matrix on x or y, at a given offset
   , flip: function(a, o) {
-      return a == 'x' ? this.scale(-1, 1, o, 0) : this.scale(1, -1, 0, o)
+      return a == 'x' ?
+          this.scale(-1, 1, o, 0) :
+        a == 'y' ?
+          this.scale(1, -1, 0, o) :
+          this.scale(-1, -1, a, o != null ? o : a)
     }
     // Skew
   , skew: function(x, y, cx, cy) {
-      return this.around(cx, cy, this.native().skewX(x || 0).skewY(y || 0))
+      // support uniformal skew
+      if (arguments.length == 1) {
+        y = x
+      } else if (arguments.length == 3) {
+        cy = cx
+        cx = y
+        y = x
+      }
+
+      // convert degrees to radians
+      x = SVG.utils.radians(x)
+      y = SVG.utils.radians(y)
+
+      return this.around(cx, cy, new SVG.Matrix(1, Math.tan(y), Math.tan(x), 1, 0, 0))
     }
     // SkewX
   , skewX: function(x, cx, cy) {
-      return this.around(cx, cy, this.native().skewX(x || 0))
+      return this.skew(x, 0, cx, cy)
     }
     // SkewY
   , skewY: function(y, cx, cy) {
-      return this.around(cx, cy, this.native().skewY(y || 0))
+      return this.skew(0, y, cx, cy)
     }
     // Transform around a center point
   , around: function(cx, cy, matrix) {
@@ -181,6 +181,16 @@ SVG.Matrix = SVG.invent({
     },
     // Get current screen matrix
     screenCTM: function() {
+      /* https://bugzilla.mozilla.org/show_bug.cgi?id=1344537
+         This is needed because FF does not return the transformation matrix
+         for the inner coordinate system when getScreenCTM() is called on nested svgs.
+         However all other Browsers do that */
+      if(this instanceof SVG.Nested) {
+        var rect = this.rect(1,1)
+        var m = rect.node.getScreenCTM()
+        rect.remove()
+        return new SVG.Matrix(m)
+      }
       return new SVG.Matrix(this.node.getScreenCTM())
     }
 
